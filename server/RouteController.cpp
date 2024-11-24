@@ -470,6 +470,17 @@ int modifyIpRoute(uint16_t action, uint16_t flags, uint32_t table, const char* i
         ALOGE("Error %s route %s -> %s %s to table %u: %s",
               actionName(action), destination, nexthop, interface, table, strerror(-ret));
     }
+    if (family == AF_INET6) {
+        // Stop setting v6 routes if the v6 is disabled on the interface.
+        std::string disable_ipv6;
+        if (int err = InterfaceController::getParameter("ipv6", "conf", interface, "disable_ipv6",
+                &disable_ipv6)) {
+            ALOGE("Error getting %s v6 route configuration: %s", interface, strerror(-err));
+        }
+        if (!disable_ipv6.compare("1")) {
+            return 0;
+        }
+    }
     return ret;
 }
 
